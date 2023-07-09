@@ -2,18 +2,19 @@ const std = @import("std");
 const os = std.os;
 const mem = std.mem;
 const rand = std.rand;
+const prng = rand.ChaCha;
 const crypto = std.crypto;
-// GPT just made random shit up for the RNG/algorithm part
-// so in temrs of crypto, i'm just reading up the docs here
-// const algo = crypto.aead.chacha_poly.XChaCha20Poly1305;
+
+const algo = crypto.aead.chacha_poly.XChaCha20Poly1305;
 
 pub fn main() anyerror!void {
     const folderPath = "./path/to/folder"; // Specify the folder path here
     const keyFilePath = "./path/to/key.txt"; // Specify the key file path here
 
     // Generate a random key
+    prng.init(std.time.milliTimestamp());
     var key: [32]u8 = undefined;
-    rand.random.rng.fill(key[0..]);
+    prng.int.fill(key[0..]);
 
     // Write the key to the key file
     const keyFile = try os.create(keyFilePath);
