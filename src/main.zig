@@ -2,9 +2,7 @@ const std = @import("std");
 const os = std.os;
 const mem = std.mem;
 const rand = std.rand;
-const crypto = std.crypto;
-
-const algo = crypto.aead.chacha_poly.XChaCha20Poly1305;
+const algo = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
 
 pub fn main() anyerror!void {
     const folderPath = "./path/to/folder";
@@ -25,8 +23,9 @@ pub fn main() anyerror!void {
     const t: i64 = @bitCast(seed[0..8].*);
     std.debug.print("{d}", .{t});
 
-    const prng = rand.ChaCha.init(seed);
-    _ = prng;
+    var prng = rand.ChaCha.init(seed);
+    var key: [32]u8 = undefined;
+    prng.fill(&key);
 
     // // Write the key to the key file
     // const keyFile = try os.create(keyFilePath);
