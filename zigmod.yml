@@ -1,0 +1,7 @@
+id: xntn7dz8ffy1r02mfwpuu9o5cujodgxln5p1v99ol297ku46
+name: thunderware
+license: GPL-3.0+
+description: lettuce gaming
+root_dependencies:
+
+  - src: git https://github.com/ziglibs/known-folders
