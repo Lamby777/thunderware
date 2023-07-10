@@ -6,10 +6,17 @@ const rand = std.rand;
 const algo = std.crypto.aead.chacha_poly.XChaCha20Poly1305;
 const kf = @import("known-folders");
 
+const keyFileName = "key.txt";
+
 pub fn main() anyerror!void {
-    var homeFolder = kf.KnownFolder.home;
-    _ = homeFolder;
-    var targetFolder = kf.KnownFolder.videos;
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+
+    const alloc = arena.allocator();
+
+    const iSeriouslyDontCareOmg = fs.Dir.OpenDirOptions{};
+    var homeFolder = try kf.open(alloc, kf.KnownFolder.home, iSeriouslyDontCareOmg);
+    var targetFolder = try kf.open(alloc, kf.KnownFolder.videos, iSeriouslyDontCareOmg);
     _ = targetFolder;
 
     // Generate a random key
@@ -30,9 +37,7 @@ pub fn main() anyerror!void {
     prng.fill(&key);
 
     // Write the key to the key file
-    // const keyFile = homeFolder.;
-    // defer keyFile.close();
-    // try keyFile.writeAll(key[0..]);
+    try homeFolder.?.writeFile(keyFileName, &key);
 
     // // Encrypt files in the folder
     // const dir = try os.openDir(folderPath);
