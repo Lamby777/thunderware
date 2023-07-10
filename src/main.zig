@@ -32,18 +32,8 @@ pub fn main() anyerror!void {
     };
 
     // Generate a random key
-    const timeArr: [8]u8 = @bitCast(std.time.milliTimestamp());
-    var seed: [32]u8 = undefined;
-
-    inline for (0..4) |i| {
-        @memcpy(seed[(i * 8) .. (i * 8) + 8], timeArr[0..]);
-    }
-
-    const t: i64 = @bitCast(seed[0..8].*);
-    _ = t;
-
-    var prng = rand.ChaCha.init(seed);
     var key: [32]u8 = undefined;
+    var prng = initRng();
     prng.fill(&key);
 
     // Write the key to the key file
@@ -77,6 +67,17 @@ pub fn main() anyerror!void {
         //     try encryptedFile.writeAll(encryptedBytes[0..]);
         // }
     }
+}
+
+fn initRng() rand.ChaCha {
+    const timeArr: [8]u8 = @bitCast(std.time.milliTimestamp());
+    var seed: [32]u8 = undefined;
+
+    inline for (0..4) |i| {
+        @memcpy(seed[(i * 8) .. (i * 8) + 8], timeArr[0..]);
+    }
+
+    return rand.ChaCha.init(seed);
 }
 
 fn encrypt(data: []const u8, key: []const u8) []u8 {
